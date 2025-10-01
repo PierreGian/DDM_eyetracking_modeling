@@ -118,6 +118,14 @@ RTBIC = struct();
 RTBIC.Amp4 = zeros(1,length(X));
 RTBIC.Amp8 = zeros(1,length(X));
 
+rsq = struct();
+rsq.choice = struct();
+rsq.RT = struct();
+rsq.choice.Amp4 = zeros(1,length(X));
+rsq.choice.Amp8 = zeros(1,length(X));
+rsq.RT.Amp4 = zeros(1,length(X));
+rsq.RT.Amp8 = zeros(1,length(X));
+
 DDM_AllRes.DDMVE = struct();
 
 for n=1:length(subject_list)
@@ -269,6 +277,8 @@ for n=1:length(subject_list)
     kk=5;
     BIC.DDM.Amp4(n) = computeBIC(y_vec4,y_est_vec4,kk,length(X));
     BIC.DDM.Amp8(n) = computeBIC(y_vec8,y_est_vec8,kk,length(X));
+    rsq.choice.Amp4(n) = computeRSQ(y_vec4,y_est_vec4);
+    rsq.choice.Amp8(n) = computeRSQ(y_vec8,y_est_vec8);
 
     h = figure;
     for m = 1:length(fields)
@@ -335,6 +345,8 @@ for n=1:length(subject_list)
     kk=5;
     RTBIC.Amp4(n) = computeBIC(yrt_vec4,yrt_est_vec4,kk,length(X));
     RTBIC.Amp8(n) = computeBIC(yrt_vec8,yrt_est_vec8,kk,length(X));
+    rsq.RT.Amp4(n) = computeRSQ(yrt_vec4,yrt_est_vec4);
+    rsq.RT.Amp8(n) = computeRSQ(yrt_vec8,yrt_est_vec8);
 
     sgtitle([cur_name ' Manual Response Times'])
     saveas(p, [path_RT_plots cur_name '_manual_rt.jpg']);
@@ -361,6 +373,8 @@ rtbic_struc = fullfile(path_DDM_output, ['RTBIC.mat']);
 save(rtbic_struc,'RTBIC')
 ddmAllres_struc = fullfile(path_DDM_output, ['DDM_AllRes']);
 save(ddmAllres_struc,'DDM_AllRes')
+rsq_struc = fullfile(path_DDM_output, ['rsq.mat']);
+save(rsq_struc,'rsq')
 
 function [BICret] = computeBIC(y,yhat,k,N)
     indices = find(isnan(y) == 1);
@@ -369,4 +383,14 @@ function [BICret] = computeBIC(y,yhat,k,N)
     RSS = sum((y-yhat).^2);
     N=N-length(indices);
     BICret = N*log((RSS/N))+k*log(N);
+end
+
+function [rsq] = computeRSQ(y,yhat)
+    indices = find(isnan(y) == 1);
+    y(indices) = [];
+    yhat(indices) = [];
+    y_avg = nanmean(y);
+    SS_res = sum((y-yhat).^2);
+    SS_tot = sum((y-y_avg).^2);
+    rsq = 1 - (SS_res/SS_tot);
 end
